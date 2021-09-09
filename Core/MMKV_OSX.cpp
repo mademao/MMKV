@@ -134,7 +134,7 @@ pair<bool, MLockPtr> guardForBackgroundWriting(void *ptr, size_t size) {
 #    endif // MMKV_IOS
 
 bool MMKV::set(NSObject<NSCoding> *__unsafe_unretained obj, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     if (!obj) {

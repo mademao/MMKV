@@ -41,7 +41,7 @@ static bool getFileSize(int fd, size_t &size);
 #    ifdef MMKV_ANDROID
 extern size_t ASharedMemory_getSize(int fd);
 #    else
-MemoryFile::MemoryFile(const MMKVPath_t &path) : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0) {
+MemoryFile::MemoryFile(const MMKVPath_t &path, bool readonly) : m_name(path), m_fd(-1), m_ptr(nullptr), m_size(0), m_readonly(readonly) {
     reloadFromFile();
 }
 #    endif // MMKV_ANDROID
@@ -112,7 +112,8 @@ bool MemoryFile::msync(SyncFlag syncFlag) {
 }
 
 bool MemoryFile::mmap() {
-    m_ptr = (char *) ::mmap(m_ptr, m_size, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
+    int portFlag = m_readonly ? PROT_READ : PROT_READ | PROT_WRITE;
+    m_ptr = (char *) ::mmap(m_ptr, m_size, portFlag, MAP_SHARED, m_fd, 0);
     if (m_ptr == MAP_FAILED) {
         MMKVError("fail to mmap [%s], %s", m_name.c_str(), strerror(errno));
         m_ptr = nullptr;
@@ -134,7 +135,8 @@ void MemoryFile::reloadFromFile() {
         clearMemoryCache();
     }
 
-    m_fd = open(m_name.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, S_IRWXU);
+    int readFlag = m_readonly ? O_RDWR : O_RDONLY;
+    m_fd = open(m_name.c_str(), readFlag | O_CREAT | O_CLOEXEC, S_IRWXU);
     if (m_fd < 0) {
         MMKVError("fail to open:%s, %s", m_name.c_str(), strerror(errno));
     } else {

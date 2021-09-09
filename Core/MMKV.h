@@ -44,6 +44,7 @@ enum MMKVMode : uint32_t {
     CONTEXT_MODE_MULTI_PROCESS = 0x4, // in case someone mistakenly pass Context.MODE_MULTI_PROCESS
     MMKV_ASHMEM = 0x8,
 #endif
+    MMKV_READONLY = 0x10,
 };
 
 class MMKV {
@@ -85,6 +86,8 @@ class MMKV {
     mmkv::FileLock *m_fileLock;
     mmkv::InterProcessLock *m_sharedProcessLock;
     mmkv::InterProcessLock *m_exclusiveProcessLock;
+    
+    mmkv::MMKVMode m_mode;
 
 #ifdef MMKV_APPLE
     using MMKVKey_t = NSString *__unsafe_unretained;
@@ -128,6 +131,8 @@ class MMKV {
     bool setDataForKey(mmkv::MMBuffer &&data, MMKVKey_t key, bool isDataHolder = false);
 
     bool removeDataForKey(MMKVKey_t key);
+    
+    bool isReadonly();
 
     using KVHolderRet_t = std::pair<bool, mmkv::KeyValueHolder>;
     // isDataHolder: avoid memory copying

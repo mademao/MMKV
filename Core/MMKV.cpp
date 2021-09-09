@@ -71,12 +71,13 @@ MMKV_NAMESPACE_BEGIN
 #ifndef MMKV_ANDROID
 MMKV::MMKV(const std::string &mmapID, MMKVMode mode, string *cryptKey, MMKVPath_t *rootPath)
     : m_mmapID(mmapID)
+    , m_mode(mode)
     , m_path(mappedKVPathWithID(m_mmapID, mode, rootPath))
     , m_crcPath(crcPathWithID(m_mmapID, mode, rootPath))
     , m_dic(nullptr)
     , m_dicCrypt(nullptr)
-    , m_file(new MemoryFile(m_path))
-    , m_metaFile(new MemoryFile(m_crcPath))
+    , m_file(new MemoryFile(m_path, isReadonly()))
+    , m_metaFile(new MemoryFile(m_crcPath, isReadonly()))
     , m_metaInfo(new MMKVMetaInfo())
     , m_crypter(nullptr)
     , m_lock(new ThreadLock())
@@ -402,10 +403,14 @@ void MMKV::updateCRCDigest(const uint8_t *ptr, size_t length) {
     writeActualSize(m_actualSize, m_crcDigest, nullptr, KeepSequence);
 }
 
+bool MMKV::isReadonly() {
+    return m_mode & MMKVMode::MMKV_READONLY;
+}
+
 // set & get
 
 bool MMKV::set(bool value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     size_t size = pbBoolSize();
@@ -417,7 +422,7 @@ bool MMKV::set(bool value, MMKVKey_t key) {
 }
 
 bool MMKV::set(int32_t value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     size_t size = pbInt32Size(value);
@@ -429,7 +434,7 @@ bool MMKV::set(int32_t value, MMKVKey_t key) {
 }
 
 bool MMKV::set(uint32_t value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     size_t size = pbUInt32Size(value);
@@ -441,7 +446,7 @@ bool MMKV::set(uint32_t value, MMKVKey_t key) {
 }
 
 bool MMKV::set(int64_t value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     size_t size = pbInt64Size(value);
@@ -453,7 +458,7 @@ bool MMKV::set(int64_t value, MMKVKey_t key) {
 }
 
 bool MMKV::set(uint64_t value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     size_t size = pbUInt64Size(value);
@@ -465,7 +470,7 @@ bool MMKV::set(uint64_t value, MMKVKey_t key) {
 }
 
 bool MMKV::set(float value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     size_t size = pbFloatSize();
@@ -477,7 +482,7 @@ bool MMKV::set(float value, MMKVKey_t key) {
 }
 
 bool MMKV::set(double value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     size_t size = pbDoubleSize();
@@ -499,14 +504,14 @@ bool MMKV::set(const char *value, MMKVKey_t key) {
 }
 
 bool MMKV::set(const string &value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     return setDataForKey(MMBuffer((void *) value.data(), value.length(), MMBufferNoCopy), key, true);
 }
 
 bool MMKV::set(const MMBuffer &value, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     // delay write the size needed for encoding value
@@ -515,7 +520,7 @@ bool MMKV::set(const MMBuffer &value, MMKVKey_t key) {
 }
 
 bool MMKV::set(const vector<string> &v, MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     auto data = MiniPBCoder::encodeDataWithObject(v);
@@ -737,7 +742,7 @@ size_t MMKV::getValueSize(MMKVKey_t key, bool actualSize) {
 }
 
 int32_t MMKV::writeValueToBuffer(MMKVKey_t key, void *ptr, int32_t size) {
-    if (isKeyEmpty(key) || size < 0) {
+    if (isKeyEmpty(key) || size < 0 || isReadonly()) {
         return -1;
     }
     auto s_size = static_cast<size_t>(size);
@@ -804,7 +809,7 @@ size_t MMKV::actualSize() {
 }
 
 void MMKV::removeValueForKey(MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return;
     }
     SCOPED_LOCK(m_lock);

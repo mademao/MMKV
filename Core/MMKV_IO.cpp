@@ -494,7 +494,7 @@ thread_local AESCryptStatus t_status;
 #endif // MMKV_DISABLE_CRYPT
 
 bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
-    if ((!isDataHolder && data.length() == 0) || isKeyEmpty(key)) {
+    if ((!isDataHolder && data.length() == 0) || isKeyEmpty(key) || isReadonly()) {
         return false;
     }
     SCOPED_LOCK(m_lock);
@@ -568,7 +568,7 @@ bool MMKV::setDataForKey(MMBuffer &&data, MMKVKey_t key, bool isDataHolder) {
 }
 
 bool MMKV::removeDataForKey(MMKVKey_t key) {
-    if (isKeyEmpty(key)) {
+    if (isKeyEmpty(key) || isReadonly()) {
         return false;
     }
 #ifndef MMKV_DISABLE_CRYPT

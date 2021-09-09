@@ -45,16 +45,18 @@ class MemoryFile {
     void *m_ptr;
     size_t m_size;
 
+    bool m_readonly;
+    
     bool mmap();
 
     void doCleanMemoryCache(bool forceClean);
 
 public:
 #ifndef MMKV_ANDROID
-    explicit MemoryFile(const MMKVPath_t &path);
+    explicit MemoryFile(const MMKVPath_t &path, bool readonly);
 #else
-    MemoryFile(const MMKVPath_t &path, size_t size, FileType fileType);
-    explicit MemoryFile(MMKVFileHandle_t ashmemFD);
+    MemoryFile(const MMKVPath_t &path, size_t size, FileType fileType, bool readonly);
+    explicit MemoryFile(MMKVFileHandle_t ashmemFD, bool readonly);
 
     const FileType m_fileType;
 #endif // MMKV_ANDROID
