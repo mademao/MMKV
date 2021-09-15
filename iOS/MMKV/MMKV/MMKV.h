@@ -23,6 +23,7 @@
 typedef NS_ENUM(NSUInteger, MMKVMode) {
     MMKVSingleProcess = 0x1,
     MMKVMultiProcess = 0x2,
+    MMKVMultiProcessReadonly = 0x3,
 };
 
 @interface MMKV : NSObject

@@ -172,7 +172,8 @@ static BOOL g_hasCalledInitializeMMKV = NO;
 
     SCOPED_LOCK(g_lock);
 
-    if (mode == MMKVMultiProcess) {
+    if (mode == MMKVMultiProcess
+        || mode == MMKVMultiProcessReadonly) {
         if (!rootPath) {
             rootPath = g_groupPath;
         }
